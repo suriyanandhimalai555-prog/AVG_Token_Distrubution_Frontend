@@ -120,7 +120,7 @@ export default function ResultsPage() {
       </div>
 
       {/* Downloads */}
-      <div className="border border-border bg-surface p-4 mb-6">
+      <div className="dash-card p-4 sm:p-5 mb-6">
         <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-3">DOWNLOADS</p>
         <div className="grid grid-cols-4 gap-2">
           {downloads.map(({ label, file }) => (
@@ -138,7 +138,7 @@ export default function ResultsPage() {
       </div>
 
       {/* Results table */}
-      <div className="border border-border bg-surface">
+      <div className="dash-card overflow-hidden">
         <div className="px-4 py-2 border-b border-border flex items-center justify-between">
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
             ALL WALLETS — {fmt(total)} total

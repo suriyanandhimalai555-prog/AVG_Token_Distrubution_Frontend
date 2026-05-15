@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 interface Props {
   children: ReactNode;
@@ -12,12 +13,14 @@ export default function ProtectedRoute({ children, requirePlan = true, requireAd
   const { user, subscription, loading } = useAuth();
   const location = useLocation();
 
+  useBodyScrollLock(loading);
+
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-[#0a0a0b] flex items-center justify-center font-mono">
+      <div className="fixed inset-0 flex items-center justify-center bg-terminal font-sans text-text-primary">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border border-[#00d4aa] border-t-transparent rounded-full animate-spin" />
-          <p className="text-[11px] text-[#6b6b6b] uppercase tracking-widest">Loading session</p>
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+          <p className="text-xs uppercase tracking-wider text-text-muted">Loading session</p>
         </div>
       </div>
     );

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { X } from "lucide-react";
 import { bscScanTx, shortHash } from "@/lib/utils";
+import { useTheme } from "@/theme/ThemeProvider";
 
 export interface LogLine {
   timestamp: string;
@@ -28,6 +29,13 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function LiveLog({ sessionId, onBatch }: LiveLogProps) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const logShell = isDark ? "bg-[#0b0f1f]" : "bg-white";
+  const logHeader = isDark ? "bg-[#111827]" : "bg-[#f4f4f5]";
+  const ink = isDark ? "text-[#fafafa]" : "text-[#282828]";
+  const soft = isDark ? "text-[#c4c8d0]" : "text-[#525252]";
+
   const [lines, setLines] = useState<LogLine[]>([]);
   const [autoScroll, setAutoScroll] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -42,6 +50,8 @@ export default function LiveLog({ sessionId, onBatch }: LiveLogProps) {
 
   useEffect(() => {
     if (!sessionId) return;
+
+    setLines([]);
 
     const baseUrl = import.meta.env.VITE_API_URL?.trim() ?? "";
     const sseUrl = `${baseUrl}/api/progress?sessionId=${encodeURIComponent(sessionId)}`;
@@ -92,10 +102,10 @@ export default function LiveLog({ sessionId, onBatch }: LiveLogProps) {
   }
 
   return (
-    <div className="border border-border bg-terminal flex flex-col" style={{ height: "360px" }}>
+    <div className={`border border-border flex flex-col ${logShell}`} style={{ height: "360px" }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
+      <div className={`flex items-center justify-between px-3 py-2 border-b border-border ${logHeader}`}>
+        <span className={`text-[10px] font-mono uppercase tracking-widest ${soft}`}>
           LIVE LOG — {lines.length} lines
         </span>
         <div className="flex items-center gap-3">
@@ -110,7 +120,7 @@ export default function LiveLog({ sessionId, onBatch }: LiveLogProps) {
               SCROLL TO BOTTOM
             </button>
           )}
-          <button onClick={clearLog} className="text-text-muted hover:text-danger transition-colors">
+          <button onClick={clearLog} className={`${soft} hover:text-danger transition-colors`}>
             <X size={12} />
           </button>
         </div>
@@ -120,17 +130,17 @@ export default function LiveLog({ sessionId, onBatch }: LiveLogProps) {
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-3 font-mono text-[12px] leading-5"
+        className={`flex-1 overflow-y-auto p-3 font-mono text-[12px] leading-5 ${ink}`}
       >
         {lines.length === 0 && (
-          <p className="text-text-muted">Waiting for distribution events...</p>
+          <p className={soft}>Waiting for distribution events...</p>
         )}
         {lines.map((line, i) => (
           <div key={i} className="flex items-start gap-2 animate-fade-in">
-            <span className="text-text-muted flex-shrink-0">[{line.timestamp?.slice(11, 19) ?? "—"}]</span>
+            <span className={`${soft} flex-shrink-0`}>[{line.timestamp?.slice(11, 19) ?? "—"}]</span>
             {line.type === "batch" ? (
               <>
-                <span className="text-text-muted">
+                <span className={soft}>
                   Batch {line.batchIndex}/{line.totalBatches} | {line.walletCount} wallets |
                 </span>
                 {line.txHash ? (
@@ -143,12 +153,12 @@ export default function LiveLog({ sessionId, onBatch }: LiveLogProps) {
                     TX: {shortHash(line.txHash)}
                   </a>
                 ) : (
-                  <span className="text-text-muted">TX: —</span>
+                  <span className={soft}>TX: —</span>
                 )}
                 {line.gasUsed && (
-                  <span className="text-text-muted">| GAS: {Number(line.gasUsed).toLocaleString()}</span>
+                  <span className={soft}>| GAS: {Number(line.gasUsed).toLocaleString()}</span>
                 )}
-                <span className={`font-bold ${STATUS_COLOR[line.status ?? ""] ?? "text-text-muted"}`}>
+                <span className={`font-bold ${STATUS_COLOR[line.status ?? ""] ?? soft}`}>
                   | {(line.status ?? "pending").toUpperCase()}
                 </span>
               </>
@@ -159,7 +169,7 @@ export default function LiveLog({ sessionId, onBatch }: LiveLogProps) {
                     ? "text-danger"
                     : line.level === "warn"
                       ? "text-warning"
-                      : "text-text-muted"
+                      : soft
                 }
               >
                 {line.message || "…"}

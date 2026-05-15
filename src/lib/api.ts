@@ -131,6 +131,7 @@ export interface PreflightEstimate {
   totalWallets: number;
   batchSize: number;
   batchCount: number;
+  workerCount?: number;
   token: {
     address: string;
     symbol: string;
@@ -147,6 +148,9 @@ export interface PreflightEstimate {
     gasPriceGwei: string;
     estimatedGasLikely: string;
     estimatedGasMax: string;
+    estimatedLikelyGasPerLargestBatch?: string;
+    perBatchGasLimit?: string;
+    mayExceedPerBatchLimit?: boolean;
     estimatedBnbLikely: string;
     estimatedBnbMax: string;
   };

@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import { findPlan } from "@shared/plans";
 import type { AuthSubscription } from "@/lib/authTypes";
+import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 
 interface PayRow {
   chargeId: string;
@@ -82,20 +83,23 @@ export default function AccountPage() {
   const pages = Math.max(1, Math.ceil(total / limit));
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] text-[#e8e8e8] font-mono p-6 max-w-6xl mx-auto">
+    <div className="relative min-h-screen bg-terminal text-text-primary font-sans p-6 max-w-6xl mx-auto">
+      <div className="absolute right-4 top-6 z-10">
+        <ThemeToggleButton />
+      </div>
       <div className="grid md:grid-cols-5 gap-6">
-        <div className="md:col-span-3 border border-[#1f1f23] p-6 rounded-none">
+        <div className="md:col-span-3 border border-border p-6 rounded-none">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full overflow-hidden border border-[#1f1f23] bg-[#111113] flex items-center justify-center text-[#00d4aa] font-bold">
+            <div className="w-12 h-12 rounded-full overflow-hidden border border-border bg-panel flex items-center justify-center text-[#00d4aa] font-bold">
               {user?.avatar ? <img src={user.avatar} alt="" className="w-full h-full object-cover" /> : initials(user?.name ?? "?")}
             </div>
             <div>
               <p className="font-bold text-lg">{user?.name}</p>
-              <p className="text-sm text-[#6b6b6b]">{user?.email}</p>
+              <p className="text-sm text-text-muted">{user?.email}</p>
             </div>
           </div>
-          <hr className="border-[#1f1f23] my-6" />
-          <p className="text-[10px] text-[#6b6b6b] uppercase tracking-widest">Current plan</p>
+          <hr className="border-border my-6" />
+          <p className="text-[10px] text-text-muted uppercase tracking-widest">Current plan</p>
           <p className="text-lg mt-2 uppercase tracking-wide">{planLabel}</p>
           {sub && (
             <span
@@ -113,10 +117,10 @@ export default function AccountPage() {
           )}
           {sub && (
             <>
-              <p className="text-sm mt-4 text-[#e8e8e8]">
+              <p className="text-sm mt-4 text-text-primary">
                 Wallet limit: {sub.walletLimit.toLocaleString()}
               </p>
-              <p className="text-[11px] text-[#6b6b6b] mt-1">
+              <p className="text-[11px] text-text-muted mt-1">
                 {sub.productLine === "TOKEN_HOLDER"
                   ? `Valid until: ${sub.expiresAt ? new Date(sub.expiresAt).toLocaleDateString() : "—"}`
                   : `Renews: ${sub.expiresAt ? new Date(sub.expiresAt).toLocaleDateString() : "—"}`}
@@ -125,29 +129,29 @@ export default function AccountPage() {
           )}
           <Link
             to="/onboarding"
-            className="mt-8 block w-full text-center py-3 border border-[#00d4aa] text-[#00d4aa] uppercase text-xs hover:bg-[#00d4aa] hover:text-[#0a0a0b]"
+            className="mt-8 block w-full text-center py-3 border border-[#00d4aa] text-[#00d4aa] uppercase text-xs hover:bg-[#00d4aa] hover:text-white"
           >
             UPGRADE PLAN →
           </Link>
           <button
             type="button"
             onClick={() => void signOut()}
-            className="mt-3 block w-full text-center py-2 border border-transparent text-[#6b6b6b] text-xs uppercase hover:text-[#e8e8e8]"
+            className="mt-3 block w-full text-center py-2 border border-transparent text-text-muted text-xs uppercase hover:text-text-primary"
           >
             SIGN OUT
           </button>
         </div>
 
-        <div className="md:col-span-2 border border-[#1f1f23] p-6 rounded-none">
-          <p className="text-[10px] text-[#6b6b6b] uppercase tracking-widest">Payment history</p>
+        <div className="md:col-span-2 border border-border p-6 rounded-none">
+          <p className="text-[10px] text-text-muted uppercase tracking-widest">Payment history</p>
           {rows.length === 0 ? (
-            <p className="mt-10 text-center text-[#6b6b6b] text-xs">No payment history yet.</p>
+            <p className="mt-10 text-center text-text-muted text-xs">No payment history yet.</p>
           ) : (
             <>
               <div className="mt-6 overflow-x-auto">
                 <table className="w-full text-[11px] font-mono text-left border-collapse">
-                  <thead className="text-[#6b6b6b] uppercase tracking-wider">
-                    <tr className="border-b border-[#1f1f23]">
+                  <thead className="text-text-muted uppercase tracking-wider">
+                    <tr className="border-b border-border">
                       <th className="py-2 px-2">Date</th>
                       <th className="py-2 px-2">Plan</th>
                       <th className="py-2 px-2">$</th>
@@ -158,8 +162,8 @@ export default function AccountPage() {
                   </thead>
                   <tbody>
                     {rows.map((r, i) => (
-                      <tr key={r.chargeId} className={i % 2 === 1 ? "bg-[#111113]" : ""}>
-                        <td className="py-2 px-2 text-[#9a9a9a]">
+                      <tr key={r.chargeId} className={i % 2 === 1 ? "bg-panel" : ""}>
+                        <td className="py-2 px-2 text-text-secondary">
                           {new Date(r.createdAt).toLocaleDateString()}
                         </td>
                         <td className="py-2 px-2">{r.planKey}</td>
@@ -192,12 +196,12 @@ export default function AccountPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="flex justify-between items-center mt-4 text-[10px] text-[#6b6b6b] uppercase">
+              <div className="flex justify-between items-center mt-4 text-[10px] text-text-muted uppercase">
                 <button
                   type="button"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => p - 1)}
-                  className="border border-[#1f1f23] px-3 py-1 disabled:opacity-30"
+                  className="border border-border px-3 py-1 disabled:opacity-30"
                 >
                   ← Prev
                 </button>
@@ -208,7 +212,7 @@ export default function AccountPage() {
                   type="button"
                   disabled={page >= pages}
                   onClick={() => setPage((p) => p + 1)}
-                  className="border border-[#1f1f23] px-3 py-1 disabled:opacity-30"
+                  className="border border-border px-3 py-1 disabled:opacity-30"
                 >
                   Next →
                 </button>

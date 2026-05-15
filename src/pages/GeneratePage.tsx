@@ -10,6 +10,7 @@ import ProgressBar from "@/components/ui/ProgressBar";
 import StatusBadge from "@/components/ui/StatusBadge";
 import AddressCell from "@/components/ui/AddressCell";
 import { api } from "@/lib/api";
+import { useTheme } from "@/theme/ThemeProvider";
 
 interface WalletPreview {
   index: number;
@@ -19,6 +20,13 @@ interface WalletPreview {
 
 export default function GeneratePage() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const ink = isDark ? "text-[#fafafa]" : "text-[#282828]";
+  const bgInset = isDark ? "bg-[#1e293b]" : "bg-[#f4f4f5]";
+  const bgChip = isDark ? "bg-[#0b0f1f]" : "bg-[#f4f4f5]";
+  const rowZebra = isDark ? "bg-[#0f172a]/50" : "bg-[#e8ecf2]";
+
   const sessionId = store.getSessionId();
   const [loading, setLoading] = useState(false);
   const [mnemonicVisible, setMnemonicVisible] = useState(false);
@@ -93,7 +101,7 @@ export default function GeneratePage() {
         >
           <ArrowLeft size={11} /> Back to Setup
         </button>
-        <h1 className="text-xl font-mono font-bold text-text-primary uppercase tracking-wide">Wallet Generation</h1>
+        <h1 className={`text-xl font-mono font-bold uppercase tracking-wide ${ink}`}>Wallet Generation</h1>
         <p className="mt-1 text-sm text-text-muted font-mono">Session: <span className="text-accent">{sessionId.slice(-16)}</span></p>
       </div>
 
@@ -101,8 +109,8 @@ export default function GeneratePage() {
         {/* Left panel — 60% */}
         <div className="col-span-3 space-y-4">
           {/* Counter */}
-          <div className="border border-border bg-surface p-6">
-            <div className="text-5xl font-mono font-bold text-text-primary tabular-nums">
+          <div className="dash-card p-6 sm:p-7">
+            <div className={`text-5xl font-mono font-bold tabular-nums ${ink}`}>
               {fmt(status?.sentCount ?? 0).padStart(5, "0")}
               <span className="text-text-muted"> / {fmt(status?.totalWallets ?? 0)}</span>
             </div>
@@ -114,19 +122,19 @@ export default function GeneratePage() {
 
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-2">
-            <div className="border border-border bg-surface p-3">
+            <div className={`border border-border p-3 ${bgInset}`}>
               <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted">STATUS</p>
               <div className="mt-2">
                 <StatusBadge status={status?.status ?? "idle"} />
               </div>
             </div>
-            <div className="border border-border bg-surface p-3">
+            <div className={`border border-border p-3 ${bgInset}`}>
               <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted">ELAPSED</p>
-              <p className="mt-2 text-sm font-mono text-text-primary">
+              <p className={`mt-2 text-sm font-mono ${ink}`}>
                 {fmtDuration(status?.startedAt, isGenerating ? undefined : status?.completedAt)}
               </p>
             </div>
-            <div className="border border-border bg-surface p-3">
+            <div className={`border border-border p-3 ${bgInset}`}>
               <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted">PROGRESS</p>
               <p className="mt-2 text-sm font-mono text-accent">{progress}%</p>
             </div>
@@ -164,7 +172,7 @@ export default function GeneratePage() {
 
           {/* Mnemonic */}
           {mnemonic && (
-            <div className="border border-warning bg-surface p-4">
+            <div className="dash-card border-warning/45 p-4 sm:p-5">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[10px] font-mono uppercase tracking-widest text-warning">MASTER MNEMONIC — SAVE THIS</p>
                 <button
@@ -176,9 +184,9 @@ export default function GeneratePage() {
               </div>
               <div className={`grid grid-cols-4 gap-1.5 ${!mnemonicVisible ? "blur-sm select-none" : ""}`}>
                 {words.map((word, i) => (
-                  <div key={i} className="flex items-center gap-1 border border-border px-2 py-1 bg-terminal">
+                  <div key={i} className={`flex items-center gap-1 border border-border px-2 py-1 ${bgChip}`}>
                     <span className="text-[9px] font-mono text-text-muted w-4">{i + 1}.</span>
-                    <span className="text-xs font-mono text-text-primary">{word}</span>
+                    <span className={`text-xs font-mono ${ink}`}>{word}</span>
                   </div>
                 ))}
               </div>
@@ -190,8 +198,8 @@ export default function GeneratePage() {
         </div>
 
         {/* Right panel — wallet preview */}
-        <div className="col-span-2 border border-border bg-surface">
-          <div className="px-3 py-2 border-b border-border">
+        <div className="col-span-2 dash-card flex flex-col overflow-hidden">
+          <div className={`px-3 py-2 border-b border-border ${bgInset}`}>
             <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
               LIVE PREVIEW — {fmt(walletsData?.total ?? 0)} wallets
             </p>
@@ -206,7 +214,7 @@ export default function GeneratePage() {
               </thead>
               <tbody>
                 {(walletsData?.wallets ?? []).map((w, i) => (
-                  <tr key={w.index} className={`border-b border-border/30 ${i % 2 === 0 ? "" : "bg-panel/30"}`}>
+                  <tr key={w.index} className={`border-b border-border/30 ${i % 2 === 1 ? rowZebra : ""}`}>
                     <td className="py-1.5 px-3 text-text-muted">{w.index}</td>
                     <td className="py-1.5 px-3">
                       <AddressCell address={w.address} />

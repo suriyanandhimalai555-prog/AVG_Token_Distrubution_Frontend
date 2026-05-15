@@ -8,11 +8,15 @@ import { estimateApi, prepareApi, sessionsApi, statusApi } from "@/lib/api";
 import { api } from "@/lib/api";
 import { store } from "@/lib/store";
 import { fmt, pct } from "@/lib/utils";
-import { countBatchesForWalletCount, DEFAULT_MULTI_BATCH_SIZE } from "@/lib/distributionBatching";
+import {
+  countBatchesForWalletCount,
+  DEFAULT_MULTI_BATCH_SIZE,
+  DEFAULT_PARALLEL_WORKERS,
+} from "@/lib/distributionBatching";
 import StatCard from "@/components/ui/StatCard";
-import ProgressBar from "@/components/ui/ProgressBar";
 import AddressCell from "@/components/ui/AddressCell";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { useTheme } from "@/theme/ThemeProvider";
 
 const BUCKETS = [
   [1, 14], [15, 28], [29, 42], [43, 56],
@@ -31,6 +35,16 @@ interface WalletEntry {
 
 export default function PlanPage() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const ink = isDark ? "text-[#fafafa]" : "text-[#282828]";
+  const bgInset = isDark ? "bg-[#1e293b]" : "bg-[#f4f4f5]";
+  const rowZebra = isDark ? "bg-[#0f172a]/50" : "bg-[#e8ecf2]";
+  const chartTick = isDark ? "#c4c8d0" : "#52525b";
+  const chartAxis = isDark ? "#334155" : "#cbd5e1";
+  const chartCursor = isDark ? "#1e293b" : "#e2e8f0";
+  const rowHover = isDark ? "hover:bg-[#1e293b]" : "hover:bg-[#eef1f4]";
+
   const sessionId = store.getSessionId();
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -103,6 +117,7 @@ export default function PlanPage() {
   );
   /** Preflight is informational only — user may start distribution regardless of estimates. */
   const canNavigateToDistribute = wallets.length > 0 && !!privateKey;
+  const parallelWorkers = preflight?.workerCount ?? DEFAULT_PARALLEL_WORKERS;
 
   async function handlePrepare() {
     setLoading(true);
@@ -127,7 +142,7 @@ export default function PlanPage() {
           >
             <ArrowLeft size={11} /> Back to Generate
           </button>
-          <h1 className="text-xl font-mono font-bold text-text-primary uppercase tracking-wide">Distribution Plan</h1>
+          <h1 className={`text-xl font-mono font-bold uppercase tracking-wide ${ink}`}>Distribution Plan</h1>
           <p className="mt-1 text-sm text-text-muted font-mono">Review before executing.</p>
         </div>
         <StatusBadge status={status?.status ?? "idle"} />
@@ -141,14 +156,14 @@ export default function PlanPage() {
         <StatCard
           label="Est. on-chain txs"
           value={fmt(batchCount)}
-          sub={`${preflight?.batchSize ?? DEFAULT_MULTI_BATCH_SIZE} wallets per batch`}
+          sub={`${preflight?.batchSize ?? DEFAULT_MULTI_BATCH_SIZE} wallets / multisend · ${parallelWorkers} parallel batch txs · ${preflight?.gas.gasPriceGwei ?? "0.05"} Gwei`}
           accent
         />
       </div>
 
       {/* Chart + controls */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="col-span-2 border border-border bg-surface p-4">
+        <div className={`col-span-2 dash-card p-4 sm:p-5`}>
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-4">
             TOKEN DISTRIBUTION HISTOGRAM
           </p>
@@ -157,22 +172,27 @@ export default function PlanPage() {
               <BarChart data={histData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                 <XAxis
                   dataKey="range"
-                  tick={{ fontSize: 10, fontFamily: "JetBrains Mono", fill: "#6b6b6b" }}
-                  axisLine={{ stroke: "#1f1f23" }}
+                  tick={{ fontSize: 10, fontFamily: "Poppins", fill: chartTick }}
+                  axisLine={{ stroke: chartAxis }}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fontSize: 10, fontFamily: "JetBrains Mono", fill: "#6b6b6b" }}
-                  axisLine={{ stroke: "#1f1f23" }}
+                  tick={{ fontSize: 10, fontFamily: "Poppins", fill: chartTick }}
+                  axisLine={{ stroke: chartAxis }}
                   tickLine={false}
                 />
                 <Tooltip
-                  contentStyle={{ background: "#111113", border: "1px solid #1f1f23", fontSize: 11, fontFamily: "JetBrains Mono" }}
-                  labelStyle={{ color: "#6b6b6b" }}
-                  itemStyle={{ color: "#00d4aa" }}
-                  cursor={{ fill: "#1f1f23" }}
+                  contentStyle={{
+                    background: isDark ? "#111827" : "#ffffff",
+                    border: isDark ? "1px solid rgba(148, 163, 184, 0.2)" : "1px solid rgba(15, 23, 42, 0.12)",
+                    fontSize: 11,
+                    fontFamily: "Poppins",
+                  }}
+                  labelStyle={{ color: chartTick }}
+                  itemStyle={{ color: "#3B82F6" }}
+                  cursor={{ fill: chartCursor }}
                 />
-                <Bar dataKey="count" fill="#00d4aa" radius={0} />
+                <Bar dataKey="count" fill="#3B82F6" radius={0} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -205,24 +225,25 @@ export default function PlanPage() {
               START DISTRIBUTION <ArrowRight size={12} />
             </button>
           )}
-          <div className="border border-border bg-surface p-3 space-y-2">
+          <div className={`dash-card p-3 space-y-2 sm:p-4`}>
             <div className="flex justify-between text-[10px] font-mono">
               <span className="text-text-muted">LOADED WALLETS</span>
-              <span className="text-text-primary">{fmt(total)}</span>
+              <span className={ink}>{fmt(total)}</span>
             </div>
             <div className="flex justify-between text-[10px] font-mono">
               <span className="text-text-muted">TOTAL TOKENS (FULL PLAN)</span>
               <span className="text-accent">{fmt(totalTokens)}</span>
             </div>
             <div className="flex justify-between text-[10px] font-mono">
-              <span className="text-text-muted">MULTI-TX CHUNK SIZE</span>
-              <span className="text-text-primary">
-                {preflight?.batchSize ?? DEFAULT_MULTI_BATCH_SIZE} wallets per tx (batching mode)
+              <span className="text-text-muted">SEND MODE</span>
+              <span className={ink}>
+                MultiSender: up to {preflight?.batchSize ?? DEFAULT_MULTI_BATCH_SIZE} wallets per tx,{" "}
+                {parallelWorkers} parallel multisends (PARALLEL_BATCHES)
               </span>
             </div>
           </div>
 
-          <div className="border border-border bg-surface p-3 space-y-2">
+          <div className={`dash-card p-3 space-y-2 sm:p-4`}>
             <div className="flex items-center justify-between text-[10px] font-mono">
               <span className="text-text-muted">PREFLIGHT GAS / BNB CHECK</span>
               <button
@@ -247,7 +268,7 @@ export default function PlanPage() {
               <>
                 <div className="flex justify-between text-[10px] font-mono">
                   <span className="text-text-muted">{preflight.nativeSymbol} BALANCE</span>
-                  <span className="text-text-primary">{Number(preflight.bnb.balance).toFixed(6)} {preflight.nativeSymbol}</span>
+                  <span className={ink}>{Number(preflight.bnb.balance).toFixed(6)} {preflight.nativeSymbol}</span>
                 </div>
                 <div className="flex justify-between text-[10px] font-mono">
                   <span className="text-text-muted">EST. {preflight.nativeSymbol} COST (LIKELY)</span>
@@ -255,11 +276,11 @@ export default function PlanPage() {
                 </div>
                 <div className="flex justify-between text-[10px] font-mono">
                   <span className="text-text-muted">EST. {preflight.nativeSymbol} COST (MAX)</span>
-                  <span className="text-text-primary">{Number(preflight.gas.estimatedBnbMax).toFixed(6)} {preflight.nativeSymbol}</span>
+                  <span className={ink}>{Number(preflight.gas.estimatedBnbMax).toFixed(6)} {preflight.nativeSymbol}</span>
                 </div>
                 <div className="flex justify-between text-[10px] font-mono">
                   <span className="text-text-muted">TOKEN BALANCE</span>
-                  <span className="text-text-primary">
+                  <span className={ink}>
                     {Number(preflight.token.balance).toLocaleString()} {preflight.token.symbol}
                   </span>
                 </div>
@@ -312,8 +333,8 @@ export default function PlanPage() {
       </div>
 
       {/* Wallet table */}
-      <div className="border border-border bg-surface">
-        <div className="px-4 py-2 border-b border-border">
+      <div className={`dash-card overflow-hidden`}>
+        <div className={`px-4 py-2 border-b border-border ${bgInset}`}>
           <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted">
             WALLET PLAN — {fmt(total)} total
           </p>
@@ -334,7 +355,7 @@ export default function PlanPage() {
                   const resolvedFailed = Boolean(w.failed && !isLegacyPending);
                   const resolvedReason = w.sent ? "—" : (isLegacyPending ? "Not sent" : (w.failureReason || "Not sent"));
                   return (
-                <tr key={w.index} className={`border-b border-border/30 hover:bg-panel/30 ${i % 2 === 0 ? "" : "bg-surface/50"}`}>
+                <tr key={w.index} className={`border-b border-border/30 ${rowHover} ${i % 2 === 1 ? rowZebra : ""}`}>
                   <td className="py-1.5 px-3 text-text-muted">{w.index}</td>
                   <td className="py-1.5 px-3"><AddressCell address={w.address} /></td>
                   <td className="py-1.5 px-3 text-accent">{w.amount > 0 ? fmt(w.amount) : <span className="text-text-muted">—</span>}</td>
@@ -354,7 +375,7 @@ export default function PlanPage() {
           </table>
         </div>
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+          <div className={`flex items-center justify-between px-4 py-3 border-t border-border ${bgInset}`}>
             <span className="text-[10px] font-mono text-text-muted">Page {page + 1} of {totalPages}</span>
             <div className="flex gap-2">
               <button disabled={page === 0} onClick={() => setPage((p) => p - 1)} className="px-3 py-1 border border-border text-[10px] font-mono text-text-muted hover:border-accent hover:text-accent disabled:opacity-30">PREV</button>

@@ -14,6 +14,8 @@ import toast from "react-hot-toast";
 import { store } from "@/lib/store";
 import { cn } from "@/lib/cn";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/theme/ThemeProvider";
+import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 
 const NAV_ITEMS = [
   { to: "/dashboard/setup", icon: Settings, label: "SETUP", requiresPlan: false },
@@ -36,6 +38,7 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const sessionId = store.getSessionId();
   const { user, subscription } = useAuth();
+  const { theme } = useTheme();
 
   const planActive = subscription?.status === "ACTIVE";
   const canAccessPlanFeatures = planActive || user?.role === "ADMIN";
@@ -43,50 +46,53 @@ export default function Sidebar() {
   const toastStyle = useMemo(
     () => ({
       style: {
-        background: "#111113",
-        color: "#e8e8e8",
-        border: "1px solid #1f1f23",
-        fontFamily: '"JetBrains Mono", monospace',
+        background: theme === "dark" ? "#111827" : "#ffffff",
+        color: theme === "dark" ? "#fafafa" : "#282828",
+        border:
+          theme === "dark"
+            ? "1px solid rgba(250, 250, 250, 0.12)"
+            : "1px solid rgba(40, 40, 40, 0.12)",
+        fontFamily: "Poppins, system-ui, sans-serif",
+        borderRadius: "12px",
       },
     }),
-    []
+    [theme]
   );
 
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 h-full z-50 flex flex-col transition-all duration-200 ease-in-out",
-        "bg-surface border-r border-border",
+        "fixed left-0 top-0 z-50 flex h-full flex-col border-r border-[var(--app-border)] bg-[var(--app-surface)] transition-[width,box-shadow] duration-200 ease-in-out shadow-sm/30",
         expanded ? "w-52" : "w-14"
       )}
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
     >
-      <div className="flex items-center h-14 px-3 border-b border-border overflow-hidden gap-2">
-        <div className="w-6 h-6 rounded-none bg-accent flex items-center justify-center flex-shrink-0">
-          <span className="text-black text-xs font-mono font-bold">B</span>
+      <div className="flex h-14 items-center gap-2 overflow-hidden border-b border-[var(--app-border)] px-3">
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-accent to-accent-light shadow-sm">
+          <span className="text-[10px] font-bold text-white">A</span>
         </div>
         {expanded && user ? (
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 bg-panel border border-border">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <div className="h-7 w-7 flex-shrink-0 overflow-hidden rounded-full border border-[var(--app-border)] bg-[var(--app-panel)]">
               {user.avatar ? (
-                <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                <img src={user.avatar} alt="" className="h-full w-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-[10px] font-mono text-accent">
+                <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-accent">
                   {initials(user.name)}
                 </div>
               )}
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-mono text-text-primary truncate max-w-[140px]">{user.name}</p>
+            <p className="max-w-[140px] truncate text-[11px] font-medium text-[var(--app-text)]">{user.name}</p>
               {canAccessPlanFeatures ? (
-                <span className="inline-flex text-[9px] font-mono text-accent border border-accent px-1.5 py-0.5 rounded-none mt-0.5">
+                <span className="inline-flex rounded-md border border-accent/40 bg-accent-dim px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-accent-light">
                   {user?.role === "ADMIN" ? "ADMIN" : subscription?.planKey}
                 </span>
               ) : (
                 <button
                   type="button"
-                  className="text-[9px] font-mono text-danger border border-danger px-1.5 py-0.5 rounded-none mt-0.5"
+                  className="rounded-md border border-danger px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-danger"
                   onClick={() => navigate("/onboarding")}
                 >
                   NO PLAN
@@ -95,13 +101,13 @@ export default function Sidebar() {
             </div>
           </div>
         ) : expanded ? (
-          <span className="ml-1 text-xs font-mono uppercase tracking-widest text-text-primary whitespace-nowrap">
-            BNB DIST
+          <span className="ml-1 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-[var(--app-text)]">
+            AVG
           </span>
         ) : null}
       </div>
 
-      <nav className="flex-1 py-4 flex flex-col gap-1">
+      <nav className="flex flex-1 flex-col gap-1 py-4">
         {NAV_ITEMS.map(({ to, icon: Icon, label, requiresPlan }) => {
           const isActive = location.pathname === to;
           return (
@@ -118,9 +124,9 @@ export default function Sidebar() {
                 }
               }}
               className={cn(
-                "flex items-center h-10 px-4 gap-3 relative transition-colors duration-150",
-                "text-text-muted hover:text-text-primary hover:bg-panel",
-                isActive && "text-accent border-l-2 border-accent bg-accent-dim"
+                "relative flex h-10 items-center gap-3 px-4 transition-colors duration-150",
+                "text-[var(--app-muted)] hover:bg-[var(--app-panel)] hover:text-[var(--app-text)]",
+                isActive && "border-l-2 border-accent bg-[var(--app-accent-dim)] text-accent"
               )}
             >
               {isActive && !expanded && (
@@ -128,7 +134,7 @@ export default function Sidebar() {
               )}
               <Icon size={16} className="flex-shrink-0" />
               {expanded && (
-                <span className="text-[11px] font-mono uppercase tracking-widest whitespace-nowrap">
+                <span className="text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap">
                   {label}
                 </span>
               )}
@@ -136,19 +142,19 @@ export default function Sidebar() {
           );
         })}
 
-        <div className="border-t border-border my-2 mx-3" />
+        <div className="mx-3 my-2 border-t border-[var(--app-border)]" />
 
         <NavLink
           to="/account"
           className={cn(
-            "flex items-center h-10 px-4 gap-3 relative transition-colors duration-150",
-            "text-text-muted hover:text-text-primary hover:bg-panel",
-            location.pathname === "/account" && "text-accent border-l-2 border-accent bg-accent-dim"
+            "relative flex h-10 items-center gap-3 px-4 transition-colors duration-150",
+            "text-[var(--app-muted)] hover:bg-[var(--app-panel)] hover:text-[var(--app-text)]",
+            location.pathname === "/account" && "border-l-2 border-accent bg-[var(--app-accent-dim)] text-accent"
           )}
         >
           <UserCircle size={18} className="flex-shrink-0" />
           {expanded && (
-            <span className="text-[11px] font-mono uppercase tracking-widest whitespace-nowrap">Account</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap">Account</span>
           )}
         </NavLink>
 
@@ -156,34 +162,40 @@ export default function Sidebar() {
           <NavLink
             to="/admin"
             className={cn(
-              "flex items-center h-10 px-4 gap-3 relative transition-colors duration-150",
-              "text-text-muted hover:text-text-primary hover:bg-panel",
-              location.pathname.startsWith("/admin") && "text-accent border-l-2 border-accent bg-accent-dim"
+              "relative flex h-10 items-center gap-3 px-4 transition-colors duration-150",
+              "text-[var(--app-muted)] hover:bg-[var(--app-panel)] hover:text-[var(--app-text)]",
+              location.pathname.startsWith("/admin") && "border-l-2 border-accent bg-[var(--app-accent-dim)] text-accent"
             )}
           >
             <Shield size={18} className="flex-shrink-0" />
             {expanded && (
-              <span className="text-[11px] font-mono uppercase tracking-widest whitespace-nowrap">Admin</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap">Admin</span>
             )}
           </NavLink>
         )}
       </nav>
 
-      <div className="border-t border-border p-4 overflow-hidden">
+      <div className="mt-auto border-t border-[var(--app-border)] px-2 py-3">
+        <div className={cn("flex", expanded ? "justify-start px-2" : "justify-center")}>
+          <ThemeToggleButton showLabel={expanded} />
+        </div>
+      </div>
+
+      <div className="border-t border-[var(--app-border)] p-4 overflow-hidden">
         {sessionId ? (
           <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-success flex-shrink-0 animate-pulse-slow" />
+            <span className="h-1.5 w-1.5 flex-shrink-0 animate-pulse-slow rounded-full bg-success" />
             {expanded && (
-              <span className="text-[10px] font-mono text-text-muted truncate">
+              <span className="truncate font-mono text-[10px] text-[var(--app-muted)]">
                 {sessionId.slice(-8)}
               </span>
             )}
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-text-muted flex-shrink-0" />
+            <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--app-muted)]" />
             {expanded && (
-              <span className="text-[10px] font-mono text-text-muted">NO SESSION</span>
+              <span className="font-mono text-[10px] text-[var(--app-muted)]">NO SESSION</span>
             )}
           </div>
         )}

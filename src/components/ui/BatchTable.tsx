@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import StatusBadge from "./StatusBadge";
 import TxHashLink from "./TxHashLink";
 import { fmt, fmtGas, fmtTime } from "@/lib/utils";
+import { useTheme } from "@/theme/ThemeProvider";
 
 interface Batch {
   _id: string;
@@ -24,6 +25,12 @@ const PAGE_SIZE = 20;
 
 export default function BatchTable({ sessionId }: BatchTableProps) {
   const [page, setPage] = useState(0);
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const ink = isDark ? "text-[#fafafa]" : "text-[#282828]";
+  const soft = isDark ? "text-[#c4c8d0]" : "text-[#525252]";
+  const rowZebra = isDark ? "bg-[#0f172a]/50" : "bg-[#e8ecf2]";
+  const rowHover = isDark ? "hover:bg-[#1e293b]" : "hover:bg-[#eef1f4]";
 
   const { data } = useQuery({
     queryKey: ["batches", sessionId, page],
@@ -48,7 +55,7 @@ export default function BatchTable({ sessionId }: BatchTableProps) {
           <thead>
             <tr className="border-b border-border">
               {["BATCH", "WALLETS", "TX HASH", "GAS", "STATUS", "TIME"].map((h) => (
-                <th key={h} className="text-left py-2 px-3 text-[10px] uppercase tracking-widest text-text-muted font-normal">
+                <th key={h} className={`text-left py-2 px-3 text-[10px] uppercase tracking-widest ${soft} font-normal`}>
                   {h}
                 </th>
               ))}
@@ -57,7 +64,7 @@ export default function BatchTable({ sessionId }: BatchTableProps) {
           <tbody>
             {batches.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-text-muted">
+                <td colSpan={6} className={`py-8 text-center ${soft}`}>
                   No batches yet.
                 </td>
               </tr>
@@ -65,20 +72,20 @@ export default function BatchTable({ sessionId }: BatchTableProps) {
             {batches.map((batch, i) => (
               <tr
                 key={batch._id}
-                className={`border-b border-border/50 hover:bg-panel transition-colors ${
-                  i % 2 === 0 ? "bg-transparent" : "bg-surface/30"
+                className={`border-b border-border/50 ${rowHover} transition-colors ${
+                  i % 2 === 1 ? rowZebra : ""
                 }`}
               >
-                <td className="py-2 px-3 text-text-primary">#{fmt(batch.batchIndex)}</td>
-                <td className="py-2 px-3 text-text-primary">{fmt(batch.walletCount)}</td>
+                <td className={`py-2 px-3 ${ink}`}>#{fmt(batch.batchIndex)}</td>
+                <td className={`py-2 px-3 ${ink}`}>{fmt(batch.walletCount)}</td>
                 <td className="py-2 px-3">
                   <TxHashLink hash={batch.txHash} />
                 </td>
-                <td className="py-2 px-3 text-text-muted">{fmtGas(batch.gasUsed)}</td>
+                <td className={`py-2 px-3 ${soft}`}>{fmtGas(batch.gasUsed)}</td>
                 <td className="py-2 px-3">
                   <StatusBadge status={batch.status} />
                 </td>
-                <td className="py-2 px-3 text-text-muted">{fmtTime(batch.confirmedAt ?? batch.createdAt)}</td>
+                <td className={`py-2 px-3 ${soft}`}>{fmtTime(batch.confirmedAt ?? batch.createdAt)}</td>
               </tr>
             ))}
           </tbody>
@@ -87,21 +94,21 @@ export default function BatchTable({ sessionId }: BatchTableProps) {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4 px-3">
-          <span className="text-[10px] font-mono text-text-muted">
+          <span className={`text-[10px] font-mono ${soft}`}>
             Page {page + 1} of {totalPages} ({fmt(total)} total)
           </span>
           <div className="flex gap-2">
             <button
               disabled={page === 0}
               onClick={() => setPage((p) => p - 1)}
-              className="px-3 py-1 border border-border text-[10px] font-mono text-text-muted hover:border-accent hover:text-accent disabled:opacity-30 transition-colors"
+              className={`px-3 py-1 border border-border text-[10px] font-mono ${soft} hover:border-accent hover:text-accent disabled:opacity-30 transition-colors`}
             >
               PREV
             </button>
             <button
               disabled={page >= totalPages - 1}
               onClick={() => setPage((p) => p + 1)}
-              className="px-3 py-1 border border-border text-[10px] font-mono text-text-muted hover:border-accent hover:text-accent disabled:opacity-30 transition-colors"
+              className={`px-3 py-1 border border-border text-[10px] font-mono ${soft} hover:border-accent hover:text-accent disabled:opacity-30 transition-colors`}
             >
               NEXT
             </button>

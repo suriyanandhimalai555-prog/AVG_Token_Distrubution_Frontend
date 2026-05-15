@@ -18,7 +18,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/*": ["../../shared/*"]
+      "@shared/plans": ["../../AVG_Token_Distrubution_Backend/src/lib/plans.ts"]
     }
   },
   "include": ["src"],
