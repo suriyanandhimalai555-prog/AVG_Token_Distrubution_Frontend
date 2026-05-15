@@ -238,7 +238,7 @@ export default function PlanPage() {
               <span className="text-text-muted">SEND MODE</span>
               <span className={ink}>
                 MultiSender: up to {preflight?.batchSize ?? DEFAULT_MULTI_BATCH_SIZE} wallets per tx,{" "}
-                {parallelWorkers} parallel multisends (PARALLEL_BATCHES)
+                {parallelWorkers} parallel multisend workers
               </span>
             </div>
           </div>

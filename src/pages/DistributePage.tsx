@@ -257,11 +257,9 @@ export default function DistributePage() {
             </p>
             <p className={`text-[11px] font-mono leading-relaxed ${ink}`}>
               <span className="text-accent">MultiSender</span> batches: up to{" "}
-              {preflight?.batchSize ?? "—"} wallets per on-chain tx (server{" "}
-              <span className="text-accent">BATCH_SIZE</span>
-              ). Up to {parallelWorkers} multisend txs in flight (
-              <span className="text-accent">PARALLEL_BATCHES</span>
-              ). Gas price <span className="text-accent">{gasPriceGwei} Gwei</span>, up to{" "}
+              {preflight?.batchSize ?? "—"} wallets per on-chain tx (server batch size). Up to{" "}
+              {parallelWorkers} parallel multisend workers in flight. Gas price{" "}
+              <span className="text-accent">{gasPriceGwei} Gwei</span>, up to{" "}
               {preflight?.gas.perBatchGasLimit
                 ? Number(preflight.gas.perBatchGasLimit).toLocaleString()
                 : "4,000,000"}{" "}
