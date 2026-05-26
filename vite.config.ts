@@ -7,18 +7,13 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Plan catalog lives in backend — single source of truth.
-      "@shared/plans": path.resolve(__dirname, "../../AVG_Token_Distrubution_Backend/src/lib/plans.ts"),
+      "@shared/plans": path.resolve(__dirname, "./src/shared/plans.ts"),
     },
   },
   server: {
     port: 5173,
     fs: {
-      // Must include project root; a custom list replaces defaults and would block index.html.
-      allow: [
-        path.resolve(__dirname),
-        path.resolve(__dirname, "../../AVG_Token_Distrubution_Backend"),
-      ],
+      allow: [path.resolve(__dirname)],
     },
     proxy: {
       "/api": {
