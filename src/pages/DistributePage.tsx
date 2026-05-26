@@ -13,6 +13,7 @@ import StatCard from "@/components/ui/StatCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import LiveLog from "@/components/ui/LiveLog";
 import BatchTable from "@/components/ui/BatchTable";
+import CountdownPanel from "@/components/ui/CountdownPanel";
 import { useTheme } from "@/theme/ThemeProvider";
 
 export default function DistributePage() {
@@ -30,6 +31,12 @@ export default function DistributePage() {
   const privateKey = store.getPrivateKey();
   const [loadingStart, setLoadingStart] = useState(false);
   const [loadingStop, setLoadingStop] = useState(false);
+  const [delayMode, setDelayMode] = useState(false);
+  const [isWaiting, setIsWaiting] = useState(false);
+  const [secondsRemaining, setSecondsRemaining] = useState(0);
+  const [totalDelaySeconds, setTotalDelaySeconds] = useState(0);
+  const [currentWalletIndex, setCurrentWalletIndex] = useState(0);
+  const [remainingWalletsDelay, setRemainingWalletsDelay] = useState(0);
 
   const { data: sessionData } = useQuery({
     queryKey: ["session", sessionId],
@@ -84,7 +91,7 @@ export default function DistributePage() {
       if ((pre.data.tokenSourceNetwork ?? "selected") !== "selected") {
         toast("Note: token preview uses mainnet fallback data.", { icon: "ℹ️" });
       }
-      await distributeApi.start(sessionId, pk);
+      await distributeApi.start(sessionId, pk, delayMode);
       toast.success("Distribution started");
       setTimeout(() => refetchStatus(), 1500);
     } catch (err: unknown) {
@@ -117,7 +124,56 @@ export default function DistributePage() {
   const totalWallets = status?.totalWallets ?? 0;
   const progress = pct(sentCount, Math.max(1, totalWallets));
   const remainingCount = Math.max(0, totalWallets - sentCount - failedCount);
+  const estDelayHours = Math.round((remainingCount * 180) / 3600);
   const radialData = [{ name: "progress", value: progress, fill: "#3B82F6" }];
+
+  const totalElapsedSeconds = status?.startedAt
+    ? Math.max(0, Math.floor((Date.now() - new Date(status.startedAt).getTime()) / 1000))
+    : 0;
+
+  useEffect(() => {
+    if (!sessionId || !isDistributing) return;
+
+    const baseUrl = import.meta.env.VITE_API_URL?.trim() ?? "";
+    const sseUrl = `${baseUrl}/api/progress?sessionId=${encodeURIComponent(sessionId)}`;
+    const es = new EventSource(sseUrl, { withCredentials: true });
+
+    const invalidateProgress = () => {
+      qc.invalidateQueries({ queryKey: ["status", sessionId] });
+      qc.invalidateQueries({ queryKey: ["batches", sessionId] });
+    };
+
+    es.addEventListener("stats", invalidateProgress);
+    es.addEventListener("batch", invalidateProgress);
+
+    es.addEventListener("delay:start", (e: MessageEvent) => {
+      const data = JSON.parse(e.data) as {
+        delayMs: number;
+        walletIndex: number;
+        remaining: number;
+      };
+      setIsWaiting(true);
+      const secs = Math.ceil(data.delayMs / 1000);
+      setTotalDelaySeconds(secs);
+      setSecondsRemaining(secs);
+      setCurrentWalletIndex(data.walletIndex);
+      setRemainingWalletsDelay(data.remaining);
+    });
+
+    es.addEventListener("delay:tick", (e: MessageEvent) => {
+      const data = JSON.parse(e.data) as { secondsRemaining: number };
+      setSecondsRemaining(data.secondsRemaining);
+    });
+
+    es.addEventListener("delay:end", () => {
+      setIsWaiting(false);
+      setSecondsRemaining(0);
+    });
+
+    return () => {
+      es.close();
+    };
+  }, [sessionId, isDistributing, delayMode, qc]);
 
   return (
     <div>
@@ -205,6 +261,80 @@ export default function DistributePage() {
               </p>
             </div>
           </div>
+
+          {/* Transfer delay mode */}
+          <div className="bg-[#111113] border border-[#1f1f23] p-6 mb-6">
+            <div className="flex items-start justify-between gap-6">
+              <div className="flex-1">
+                <p className="text-[11px] uppercase tracking-widest text-[#6b6b6b] font-mono mb-1">
+                  TRANSFER DELAY MODE
+                </p>
+                <p className="text-[13px] font-mono text-[#e8e8e8] mb-2">
+                  Random delay between each transfer
+                </p>
+                <p className="text-[12px] font-mono text-[#6b6b6b] leading-relaxed">
+                  Adds a random 120–240 second wait between each individual wallet transfer. Makes
+                  distribution look like genuine organic activity rather than automated bot behaviour.
+                </p>
+                {delayMode && (
+                  <div className="mt-3 flex gap-6">
+                    <div>
+                      <p className="text-[10px] text-[#6b6b6b] font-mono">MIN DELAY</p>
+                      <p className="text-[13px] font-mono text-[#e8e8e8]">120s</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-[#6b6b6b] font-mono">MAX DELAY</p>
+                      <p className="text-[13px] font-mono text-[#e8e8e8]">240s</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-[#6b6b6b] font-mono">AVG DELAY</p>
+                      <p className="text-[13px] font-mono text-[#e8e8e8]">~3 MIN</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-[#6b6b6b] font-mono">EST. TOTAL</p>
+                      <p className="text-[13px] font-mono text-[#f59e0b]">{estDelayHours}h+</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="flex-shrink-0 flex flex-col items-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => !isDistributing && setDelayMode(!delayMode)}
+                  disabled={isDistributing}
+                  role="switch"
+                  aria-checked={delayMode}
+                  className={`relative w-12 h-6 border transition-all duration-200 ${
+                    delayMode
+                      ? "bg-[#00d4aa22] border-[#00d4aa]"
+                      : "bg-[#1f1f23] border-[#2a2a2e]"
+                  } ${isDistributing ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
+                >
+                  <span
+                    className={`absolute top-[3px] w-[18px] h-[18px] bg-white transition-all duration-200 ${
+                      delayMode ? "left-[25px]" : "left-[3px]"
+                    }`}
+                  />
+                </button>
+                <p
+                  className={`text-[11px] font-mono ${delayMode ? "text-[#00d4aa]" : "text-[#6b6b6b]"}`}
+                >
+                  {delayMode ? "ENABLED" : "DISABLED"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {delayMode && (
+            <div className="border border-[#f59e0b22] bg-[#f59e0b08] p-3 mb-6 flex gap-3 items-start">
+              <span className="text-[#f59e0b]">⚠</span>
+              <p className="text-[11px] font-mono text-[#f59e0b] leading-relaxed">
+                Delay mode is ON. Distribution will send wallets one by one with 120–240s gaps. For{" "}
+                {fmt(remainingCount)} wallets this takes ~{estDelayHours} hours. Do not close the terminal
+                or browser during this time.
+              </p>
+            </div>
+          )}
 
           {/* Controls */}
           <div className="space-y-2">
@@ -294,6 +424,16 @@ export default function DistributePage() {
         <div className="col-span-3 space-y-4">
           {/* Live log */}
           <LiveLog sessionId={sessionId} onBatch={onBatch} />
+
+          {isDistributing && delayMode && isWaiting && (
+            <CountdownPanel
+              secondsRemaining={secondsRemaining}
+              totalSeconds={totalDelaySeconds}
+              currentWallet={currentWalletIndex}
+              remainingWallets={remainingWalletsDelay}
+              totalElapsed={totalElapsedSeconds}
+            />
+          )}
 
           {/* Batch table */}
           <div className={`dash-card overflow-hidden`}>

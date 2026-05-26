@@ -214,9 +214,11 @@ export const sessionsApi = {
     api.delete<{ success: boolean; deletedSessionId: string }>(`/api/sessions/${id}`),
 };
 
+export type WalletMode = "HD_SINGLE_SEED" | "INDEPENDENT_SEEDS";
+
 export const generateApi = {
-  start: (sessionId: string, privateKey: string) =>
-    api.post<{ status: string }>("/api/generate", { sessionId, privateKey }),
+  start: (sessionId: string, privateKey: string, walletMode: WalletMode = "INDEPENDENT_SEEDS") =>
+    api.post<{ status: string }>("/api/generate", { sessionId, privateKey, walletMode }),
 };
 
 export const prepareApi = {
@@ -225,8 +227,8 @@ export const prepareApi = {
 };
 
 export const distributeApi = {
-  start: (sessionId: string, privateKey: string) =>
-    api.post<{ status: string }>("/api/distribute", { sessionId, privateKey }),
+  start: (sessionId: string, privateKey: string, delayMode = false) =>
+    api.post<{ status: string }>("/api/distribute", { sessionId, privateKey, delayMode }),
 
   stop: (sessionId: string) =>
     api.delete<{ status: string; killed: boolean }>("/api/distribute", {

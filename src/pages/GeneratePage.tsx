@@ -9,6 +9,7 @@ import { fmt, fmtDuration, pct } from "@/lib/utils";
 import ProgressBar from "@/components/ui/ProgressBar";
 import StatusBadge from "@/components/ui/StatusBadge";
 import AddressCell from "@/components/ui/AddressCell";
+import WalletModeCard, { type WalletMode } from "@/components/ui/WalletModeCard";
 import { api } from "@/lib/api";
 import { useTheme } from "@/theme/ThemeProvider";
 
@@ -30,6 +31,7 @@ export default function GeneratePage() {
   const sessionId = store.getSessionId();
   const [loading, setLoading] = useState(false);
   const [mnemonicVisible, setMnemonicVisible] = useState(false);
+  const [walletMode, setWalletMode] = useState<WalletMode>("INDEPENDENT_SEEDS");
 
   const { data: status, refetch: refetchStatus } = useQuery({
     queryKey: ["status", sessionId],
@@ -63,7 +65,7 @@ export default function GeneratePage() {
     }
     setLoading(true);
     try {
-      await generateApi.start(sessionId, pk);
+      await generateApi.start(sessionId, pk, walletMode);
       toast.success("Wallet generation started");
       refetchStatus();
     } catch {
@@ -101,7 +103,14 @@ export default function GeneratePage() {
         >
           <ArrowLeft size={11} /> Back to Setup
         </button>
-        <h1 className={`text-xl font-mono font-bold uppercase tracking-wide ${ink}`}>Wallet Generation</h1>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className={`text-xl font-mono font-bold uppercase tracking-wide ${ink}`}>Wallet Generation</h1>
+          {isDone && (
+            <span className="text-[10px] font-mono px-2 py-0.5 border border-[#00d4aa] text-[#00d4aa]">
+              {walletMode === "INDEPENDENT_SEEDS" ? "INDEPENDENT SEEDS" : "HD SINGLE SEED"}
+            </span>
+          )}
+        </div>
         <p className="mt-1 text-sm text-text-muted font-mono">Session: <span className="text-accent">{sessionId.slice(-16)}</span></p>
       </div>
 
@@ -138,6 +147,44 @@ export default function GeneratePage() {
               <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted">PROGRESS</p>
               <p className="mt-2 text-sm font-mono text-accent">{progress}%</p>
             </div>
+          </div>
+
+          {/* Wallet generation mode */}
+          <div className="bg-[#111113] border border-[#1f1f23] p-6 mb-6">
+            <p className="text-[11px] uppercase tracking-widest text-[#6b6b6b] font-mono mb-4">
+              WALLET GENERATION MODE
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <WalletModeCard
+                mode="HD_SINGLE_SEED"
+                selected={walletMode === "HD_SINGLE_SEED"}
+                onSelect={() => setWalletMode("HD_SINGLE_SEED")}
+                disabled={isGenerating}
+              />
+              <WalletModeCard
+                mode="INDEPENDENT_SEEDS"
+                selected={walletMode === "INDEPENDENT_SEEDS"}
+                onSelect={() => setWalletMode("INDEPENDENT_SEEDS")}
+                disabled={isGenerating}
+              />
+            </div>
+            {walletMode === "HD_SINGLE_SEED" ? (
+              <div className="border border-[#f59e0b22] bg-[#f59e0b08] p-3 mt-3 flex gap-3 items-start">
+                <span className="text-[#f59e0b] text-sm mt-0.5">⚠</span>
+                <p className="text-[11px] font-mono text-[#f59e0b] leading-relaxed">
+                  All wallets share one master mnemonic. A blockchain analyst can detect these wallets are
+                  related. Use Independent Seeds for more realistic distribution.
+                </p>
+              </div>
+            ) : (
+              <div className="border border-[#00d4aa22] bg-[#00d4aa08] p-3 mt-3 flex gap-3 items-start">
+                <span className="text-[#00d4aa] text-sm mt-0.5">●</span>
+                <p className="text-[11px] font-mono text-[#6b6b6b] leading-relaxed">
+                  Each wallet has its own 12-word seed phrase saved to output/mnemonics/. Generation is
+                  slightly slower but wallets appear as independent real users on-chain.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Controls */}
