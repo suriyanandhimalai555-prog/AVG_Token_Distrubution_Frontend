@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import { statusApi } from "@/lib/api";
 import { store } from "@/lib/store";
 import { fmtBnb, fmt } from "@/lib/utils";
@@ -8,9 +9,13 @@ export default function TopBar() {
 
   const { data } = useQuery({
     queryKey: ["status", sessionId],
-    queryFn: () => statusApi.get(sessionId).then((r) => r.data),
+    queryFn: () => statusApi.get(sessionId),
     enabled: !!sessionId,
     refetchInterval: 10_000,
+    retry: (count, err) => {
+      if (axios.isAxiosError(err) && err.response?.status === 404) return false;
+      return count < 2;
+    },
   });
 
   const showSessionStrip = !!sessionId && !!data;

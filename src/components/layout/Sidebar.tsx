@@ -26,8 +26,8 @@ const NAV_ITEMS = [
   { to: "/dashboard/history", icon: History, label: "HISTORY", requiresPlan: false },
 ] as const;
 
-function initials(name: string): string {
-  const p = name.trim().split(/\s+/);
+function initials(name: string | undefined | null): string {
+  const p = (name ?? "").trim().split(/\s+/).filter(Boolean);
   if (p.length === 0) return "?";
   return (p[0][0] ?? "?").toUpperCase() + ((p[1]?.[0] ?? "") as string).toUpperCase();
 }

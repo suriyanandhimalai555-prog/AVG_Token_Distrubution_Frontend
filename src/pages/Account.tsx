@@ -19,8 +19,8 @@ interface PayRow {
   paidAt?: string;
 }
 
-function initials(name: string): string {
-  const p = name.trim().split(/\s+/).filter(Boolean);
+function initials(name: string | undefined | null): string {
+  const p = (name ?? "").trim().split(/\s+/).filter(Boolean);
   if (!p.length) return "?";
   return `${p[0][0]}${p[1]?.[0] ?? ""}`.toUpperCase();
 }

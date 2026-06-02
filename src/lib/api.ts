@@ -1,4 +1,5 @@
 import axios from "axios";
+import { store } from "@/lib/store";
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "";
 
@@ -237,8 +238,19 @@ export const distributeApi = {
 };
 
 export const statusApi = {
-  get: (sessionId: string) =>
-    api.get<StatusResponse>(`/api/status?sessionId=${sessionId}`),
+  get: async (sessionId: string): Promise<StatusResponse> => {
+    try {
+      const { data } = await api.get<StatusResponse>(
+        `/api/status?sessionId=${encodeURIComponent(sessionId)}`
+      );
+      return data;
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 404) {
+        store.clearSessionId();
+      }
+      throw err;
+    }
+  },
 };
 
 export const exportApi = {

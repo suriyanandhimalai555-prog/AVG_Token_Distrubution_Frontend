@@ -37,10 +37,10 @@ function shortAddress(v: string): string {
   return `${t.slice(0, 8)}...${t.slice(-6)}`;
 }
 
-function RpcLine({ label, value }: { label: string; value: string }) {
+function RpcLine({ label, value }: { label: string; value?: string }) {
   const { theme } = useTheme();
   const ink = theme === "dark" ? "text-[#fafafa]" : "text-[#282828]";
-  const ok = value && value.trim().length > 0;
+  const ok = Boolean(value?.trim());
   return (
     <p className={`break-all font-mono text-[11px] leading-relaxed ${ink}`}>
       <span className="text-text-secondary">{label}: </span>
@@ -217,7 +217,11 @@ export default function SetupPage() {
   const requiredMax = totalWallets * 100;
   const tokenBalanceNum = Number(walletPreview?.token?.balance ?? "0");
   const hasEnoughForMax = tokenBalanceNum >= requiredMax;
-  const tokenName = walletPreview?.token?.name?.trim() || "Unknown Token";
+  const tokenNameRaw = walletPreview?.token?.name;
+  const tokenName =
+    typeof tokenNameRaw === "string" && tokenNameRaw.trim()
+      ? tokenNameRaw.trim()
+      : "Unknown Token";
 
   function handleWalletsNumberChange(v: string): void {
     setTotalWalletsInput(v);

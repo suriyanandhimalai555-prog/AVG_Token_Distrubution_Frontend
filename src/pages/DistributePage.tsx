@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { Play, Square, ArrowLeft, ArrowRight } from "lucide-react";
 import { RadialBarChart, RadialBar, ResponsiveContainer } from "recharts";
+import axios from "axios";
 import { distributeApi, estimateApi, sessionsApi, statusApi } from "@/lib/api";
 import { store } from "@/lib/store";
 import { fmt, fmtBnb, fmtDuration, pct } from "@/lib/utils";
@@ -62,10 +63,14 @@ export default function DistributePage() {
 
   const { data: status, refetch: refetchStatus } = useQuery({
     queryKey: ["status", sessionId],
-    queryFn: () => statusApi.get(sessionId).then((r) => r.data),
+    queryFn: () => statusApi.get(sessionId),
     enabled: !!sessionId,
-    refetchInterval: (data) =>
-      data?.state?.data?.status === "distributing" ? 3000 : 8000,
+    refetchInterval: (query) =>
+      query.state.data?.status === "distributing" ? 3000 : 8000,
+    retry: (count, err) => {
+      if (axios.isAxiosError(err) && err.response?.status === 404) return false;
+      return count < 2;
+    },
   });
 
   const isDistributing = status?.status === "distributing" || status?.isRunning;
@@ -390,7 +395,7 @@ export default function DistributePage() {
               {preflight?.batchSize ?? "—"} wallets per on-chain tx (server batch size). Up to{" "}
               {parallelWorkers} parallel multisend workers in flight. Gas price{" "}
               <span className="text-accent">{gasPriceGwei} Gwei</span>, up to{" "}
-              {preflight?.gas.perBatchGasLimit
+              {preflight?.gas?.perBatchGasLimit
                 ? Number(preflight.gas.perBatchGasLimit).toLocaleString()
                 : "4,000,000"}{" "}
               gas per batch tx (estimate).

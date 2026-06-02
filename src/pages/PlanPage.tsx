@@ -53,7 +53,7 @@ export default function PlanPage() {
 
   const { data: status } = useQuery({
     queryKey: ["status", sessionId],
-    queryFn: () => statusApi.get(sessionId).then((r) => r.data),
+    queryFn: () => statusApi.get(sessionId),
     enabled: !!sessionId,
     refetchInterval: 5000,
   });
@@ -268,33 +268,33 @@ export default function PlanPage() {
               <>
                 <div className="flex justify-between text-[10px] font-mono">
                   <span className="text-text-muted">{preflight.nativeSymbol} BALANCE</span>
-                  <span className={ink}>{Number(preflight.bnb.balance).toFixed(6)} {preflight.nativeSymbol}</span>
+                  <span className={ink}>{Number(preflight.bnb?.balance ?? 0).toFixed(6)} {preflight.nativeSymbol}</span>
                 </div>
                 <div className="flex justify-between text-[10px] font-mono">
                   <span className="text-text-muted">EST. {preflight.nativeSymbol} COST (LIKELY)</span>
-                  <span className="text-accent">{Number(preflight.gas.estimatedBnbLikely).toFixed(6)} {preflight.nativeSymbol}</span>
+                  <span className="text-accent">{Number(preflight.gas?.estimatedBnbLikely ?? 0).toFixed(6)} {preflight.nativeSymbol}</span>
                 </div>
                 <div className="flex justify-between text-[10px] font-mono">
                   <span className="text-text-muted">EST. {preflight.nativeSymbol} COST (MAX)</span>
-                  <span className={ink}>{Number(preflight.gas.estimatedBnbMax).toFixed(6)} {preflight.nativeSymbol}</span>
+                  <span className={ink}>{Number(preflight.gas?.estimatedBnbMax ?? 0).toFixed(6)} {preflight.nativeSymbol}</span>
                 </div>
                 <div className="flex justify-between text-[10px] font-mono">
                   <span className="text-text-muted">TOKEN BALANCE</span>
                   <span className={ink}>
-                    {Number(preflight.token.balance).toLocaleString()} {preflight.token.symbol}
+                    {Number(preflight.token?.balance ?? 0).toLocaleString()} {preflight.token?.symbol ?? "TOKEN"}
                   </span>
                 </div>
                 <div className="flex justify-between text-[10px] font-mono">
                   <span className="text-text-muted">TOKEN NEEDED (MAX)</span>
                   <span className="text-accent">
-                    {preflight.token.requiredMax.toLocaleString()} {preflight.token.symbol}
+                    {(preflight.token?.requiredMax ?? 0).toLocaleString()} {preflight.token?.symbol ?? "TOKEN"}
                   </span>
                 </div>
                 <div className="pt-1 space-y-2">
                   <p className="text-text-muted text-[10px] font-mono leading-relaxed">
                     Figures above are estimates only; actual gas, fees, and token amounts may vary with network conditions.
                   </p>
-                  {preflight.token.enoughForMax && preflight.bnb.enoughLikely ? (
+                  {preflight.token?.enoughForMax && preflight.bnb?.enoughLikely ? (
                     <p className="text-success text-[10px] font-mono">
                       Ready: balance looks sufficient versus these estimates.
                     </p>

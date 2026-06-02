@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { Eye, EyeOff, Download, ArrowRight, ArrowLeft } from "lucide-react";
+import axios from "axios";
 import { generateApi, statusApi } from "@/lib/api";
 import { store } from "@/lib/store";
 import { fmt, fmtDuration, pct } from "@/lib/utils";
@@ -35,10 +36,14 @@ export default function GeneratePage() {
 
   const { data: status, refetch: refetchStatus } = useQuery({
     queryKey: ["status", sessionId],
-    queryFn: () => statusApi.get(sessionId).then((r) => r.data),
+    queryFn: () => statusApi.get(sessionId),
     enabled: !!sessionId,
-    refetchInterval: (data) =>
-      data?.state?.data?.status === "generating" ? 1500 : 5000,
+    refetchInterval: (query) =>
+      query.state.data?.status === "generating" ? 1500 : 5000,
+    retry: (count, err) => {
+      if (axios.isAxiosError(err) && err.response?.status === 404) return false;
+      return count < 2;
+    },
   });
 
   const { data: walletsData } = useQuery({

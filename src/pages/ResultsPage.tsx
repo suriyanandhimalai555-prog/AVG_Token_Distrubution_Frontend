@@ -32,7 +32,7 @@ export default function ResultsPage() {
 
   const { data: status } = useQuery({
     queryKey: ["status", sessionId],
-    queryFn: () => statusApi.get(sessionId).then((r) => r.data),
+    queryFn: () => statusApi.get(sessionId),
     enabled: !!sessionId,
     refetchInterval: 10_000,
   });
