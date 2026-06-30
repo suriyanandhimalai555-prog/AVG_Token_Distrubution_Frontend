@@ -10,20 +10,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Deploy Frontend
         uses: appleboy/ssh-action@v1.0.3
-
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          script: |
-            cd ~/otp/apps/AVG_TOKEN_DISTRIBUTION/AVG_Token_Distrubution_Frontend
+          port: 22
 
-            git pull origin main
+          script: |
+            hostname
+            whoami
+
+            cd /root/otp/apps/AVG_TOKEN_DISTRIBUTION/AVG_Token_Distrubution_Frontend
+
+            git fetch origin
+            git reset --hard origin/main
 
             cd ..
 
             docker compose build holderforge-frontend
-
             docker compose up -d holderforge-frontend
