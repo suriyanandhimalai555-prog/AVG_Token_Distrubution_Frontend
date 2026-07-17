@@ -35,8 +35,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile
-          platforms: linux/amd64
           push: true
           tags: ghcr.io/${{ secrets.GHCR_USERNAME }}/${{ vars.IMAGE_NAME }}:latest
 
@@ -49,7 +47,6 @@ jobs:
           port: ${{ secrets.PORT }}
           timeout: 60s
           command_timeout: 20m
-          script_stop: true
           debug: true
           script: |
             set -e
@@ -63,15 +60,13 @@ jobs:
             cd ${{ vars.APP_PATH }}
 
             echo "========== LOGIN TO GHCR =========="
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io \
-              -u "${{ secrets.GHCR_USERNAME }}" \
-              --password-stdin
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
-            echo "========== PULL LATEST IMAGE =========="
-            docker compose pull frontend
+            echo "========== PULL LATEST IMAGES =========="
+            docker compose pull
 
-            echo "========== RESTART FRONTEND =========="
-            docker compose up -d frontend
+            echo "========== RESTART CONTAINERS =========="
+            docker compose up -d
 
             echo "========== REMOVE UNUSED IMAGES =========="
             docker image prune -af
@@ -79,4 +74,4 @@ jobs:
             echo "========== RUNNING CONTAINERS =========="
             docker ps
 
-            echo "========== DEPLOYMENT COMPLETED =========="
+            echo "========== DEPLOYMENT SUCCESSFUL =========="
