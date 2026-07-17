@@ -21,6 +21,9 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -32,11 +35,10 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
           push: true
-          tags: |
-            ghcr.io/${{ secrets.GHCR_USERNAME }}/${{ vars.IMAGE_NAME }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ghcr.io/${{ secrets.GHCR_USERNAME }}/${{ vars.IMAGE_NAME }}:latest
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.2.2
@@ -57,24 +59,24 @@ jobs:
             whoami
             pwd
 
-            echo "========== APP =========="
+            echo "========== APPLICATION =========="
             cd ${{ vars.APP_PATH }}
 
-            echo "========== GHCR LOGIN =========="
+            echo "========== LOGIN TO GHCR =========="
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io \
               -u "${{ secrets.GHCR_USERNAME }}" \
               --password-stdin
 
-            echo "========== PULL IMAGE =========="
+            echo "========== PULL LATEST IMAGE =========="
             docker compose pull frontend
 
-            echo "========== START CONTAINER =========="
+            echo "========== RESTART FRONTEND =========="
             docker compose up -d frontend
 
-            echo "========== CLEANUP =========="
+            echo "========== REMOVE UNUSED IMAGES =========="
             docker image prune -af
 
             echo "========== RUNNING CONTAINERS =========="
             docker ps
 
-            echo "========== DEPLOY SUCCESS =========="
+            echo "========== DEPLOYMENT COMPLETED =========="
